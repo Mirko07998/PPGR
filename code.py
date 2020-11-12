@@ -2,6 +2,7 @@ import numpy as np
 import math
 from termcolor import colored
 import json
+import sys
 
 #Implementacija naivnog algoritma
 def naive_algorith(a, b, c, d, ap, bp, cp, dp):
@@ -56,7 +57,33 @@ def naive_algorith(a, b, c, d, ap, bp, cp, dp):
 
     #vracamo resenje
     return P
+
+def DLTpure(tacke, slike):
+    #Pravimo potrebne vektore za matricu korespondencije
+    mat = []
+    for i in range(len(slike)):
+        A1, A2 = makeCorespondence(tacke[i], slike[i])
+        mat.append(A1)
+        mat.append(A2)
+
+    #Pravimo matricu
+    Mat = np.array(mat)
+
+    #Radimo svd dekompoziciju
+    _, _, vh  = np.linalg.svd(Mat)
+
+    #Matica cije su kolone resenje, dobijena primenom svd-a
+    P = np.transpose(vh)
+
+    pom =P[0:9,8]
+
+    #Pravimo matricu projektivnog preslikavanja
+    res = np.array([[pom[0], pom[1], pom[2]], [pom[3], pom[4], pom[5]], [ pom[6], pom[7], pom[8] ] ] )
     
+    #Stampamo resenje DLT algoritma
+    #print(res)
+
+    return res
 
 #Implementacija DLT algoritma
 def DLT(a, b, c, d, e, f, ap, bp, cp, dp, ep, fp):
@@ -132,7 +159,27 @@ def normalize(tacke):
     
     return value, res
 
-#Normalizovani DLT algoritam
+#Normalizovani DLT algoritam koji radi sa neogranicenim brojem tacak krositi se kada se tacke unsoe preko json-a
+def DLTnormalizedPure(originali, slike):
+    #Primenjujemo f-ju za normaliaciju koja nam vraca noramlizovane tacke i matricu za normalizaciju
+    To, tackeo = normalize(originali)
+    Tp, tackep = normalize(slike)
+
+    #Primenjujemo DLT algoritam na normalizovane tacke
+    Ppom = DLTpure(tackeo, tackep)
+
+    #Vrsimo izracunavanje za koancnu matircu
+    Tpinv = np.linalg.inv(Tp)
+    
+    P = np.dot(np.dot(Tpinv, Ppom), To)
+    
+    #Stampamo dobijeno resenje
+    #print ("Matrica P dobijena normalizovanim DLT algoritmom:\n",P)
+    
+    return P
+
+
+#Normalizovani DLT algoritam koji radi sa samo pet tacak Nije obrisan zbog rada preko console
 def DLTnormalized(a, b, c, d, e, f, ap, bp, cp, dp, ep, fp):
     #Primenjujemo f-ju za normaliaciju koja nam vraca noramlizovane tacke i matricu za normalizaciju
     To, tackeo = normalize([a, b, c, d, e, f])
@@ -190,6 +237,52 @@ def makepoint(j, op):
         dp = (float(j['dp']['X1']), float(j['dp']['X2']), float(j['dp']['X3']))
 
         return [a, b, c, d, ap, bp, cp, dp]
+
+def makePoint(j):
+    tackeImena = j.keys()
+    tacke = []
+    for i in tackeImena:
+        a = float(j[i]['X1'])
+        b = float(j[i]['X2'])
+        c = float(j[i]['X3'])
+        tacke.append((a, b, c))
+    if len(tacke) % 2 !=0 :
+        print(colored('Niste uneli dovoljno tacka u json fajl', 'red'))
+        sys.exit()
+    
+    pola = int(len(tacke)/2)
+    originali = tacke[0:pola]
+    slike = tacke[pola:int(len(tacke))]
+
+    return originali, slike
+        
+def scale(K):
+    prva = K[0][0]
+    for i in range(len(K)):
+        for j in range(len(K[i])):
+            K[i][j] = K[i][j]/prva
+    return K
+
+def compareMatrixs(M, N):
+    scaleM = scale(M)
+    scaleN = scale(N)
+    
+    scaleM = zaokruzi(scaleM, 5)
+    scaleN = zaokruzi(scaleN, 5) 
+    equal = True
+
+    for i in range(len(M)):
+        for j in range(len(M[i])):
+            if scaleM[i][j] != scaleN[i][j]:
+                equal = False
+
+    if equal:
+        print(colored("Matrice su jedanke", 'red'))
+        return 1
+    else:
+        print(colored("Matrice nisu jedanke", 'red'))
+        return 0
+
 #Implementacija ulaza u Program
 
 
@@ -261,7 +354,7 @@ if __name__ == "__main__":
     elif c == 2:
 
         #Nacin unosa tacka
-        c = input(colored("Da li zelite da unesete tacle iz konzole ili iz tacke.json datoteke?\njson\\console\n",'blue'))
+        c = input(colored("Da li zelite da unesete tacle iz konzole ili iz tacke.json datoteke?\njson(preko jsona moze beskonacno)\\console(preko console moze samo 5 tacaka da se unese u DLT)\n",'blue'))
         if c == 'console':
             tacke = {}
             tacka = ['a', 'b', 'c', 'd', 'e', 'f', 'ap', 'bp', 'cp', 'dp', 'ep', 'fp']
@@ -317,30 +410,32 @@ if __name__ == "__main__":
             with open('DLTtacke.json','r') as f:
                 x = json.load(f)
             
-            a = makepoint(x, 2)
+            #a = makepoint(x, 2)
 
-            P = DLT(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11])
+            #P = DLT(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11])
 
-            print(colored("Matrica projektivnog preslikavanaj: ", 'magenta'))
-            print(colored(P, 'green'))
+            originali, slike = makePoint(x)
+            P1 = DLTpure(originali, slike)
 
+            #print(colored("Matrica projektivnog preslikavanaj: ", 'magenta'))
+            #print(colored(P, 'green'))
+            #print()
+            print(colored(P1, 'green'))
+
+            #_ = compareMatrixs(P, P1)
             c = input(colored("Da li zelite da se ispisu zaokruzene vrednosti matrice projektovanja?\nd/n\n","blue"))
             if c == 'd':
                 decimale = int(input(colored("Na koliko decimala zelite da zaokruzite vrednosti matrice?\n", 'blue')))
 
-                R = zaokruzi(P, decimale)
+                R = zaokruzi(P1, decimale)
 
                 print(colored("Zakoruzena matrica:", 'magenta'))
 
                 print(colored(R, 'green'))
             
-            print()
-
-            
-
             c = input(colored("Da li zelite i nomalizovani DLP algoritam?\n d/n\n",'blue'))
             if c == 'd':
-                P = DLTnormalized(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11])
+                P = DLTnormalizedPure(originali, slike)
 
                 print(colored("Matrica projektivnog preslikavanaj: ", 'magenta'))
                 print(colored(P, 'green'))
