@@ -123,14 +123,15 @@ def makeCorespondence(a, ap):
     return v1, v2
 
 #Funkcija za normalizaciju tacaka
-def normalize(tacke):
+def normalize(t):
     #Vrsimo tranformaciju da dobijemo afine koordinate
-    afineTacke = list(map(lambda x:(x[0]/x[2], x[1]/x[2]), tacke))
+    afineTacke = list(map(lambda x:(x[0]/x[2], x[1]/x[2]), t))
 
     #Racunjanje tezista
-    n = len(tacke)
-    xKord = list(map(lambda x: x[0], afineTacke))
-    yKord = list(map(lambda x: x[1], afineTacke))
+    n = len(t)
+    xKord = list(map(lambda m: m[0], afineTacke))
+    yKord = list(map(lambda m: m[1], afineTacke))
+
     sumaX = sum(xKord)
     sumaY = sum(yKord)
 
@@ -138,13 +139,16 @@ def normalize(tacke):
     xt = float(sumaX)/n
     yt = float(sumaY)/n
 
+    xK = list(map(lambda m: m - xt, xKord))
+    yK = list(map(lambda m: m - yt, yKord))
+
     #Matrica translacije
     T = np.array([[1, 0, (-1)*xt], [0, 1, (-1)*yt], [0, 0, 1]])
 
     #Racunamo udaljenosti tacaka od koordiantnog pocetka
-    udaljenosti = list(map(lambda x, y: math.sqrt((x-xt)**2 + (y-yt)**2), xKord, yKord))
-
-    r = sum(udaljenosti)//n
+    udaljenosti = list(map(lambda q, k: math.sqrt( (q)**2 + (k)**2 ), xK, yK))
+    
+    r = sum(udaljenosti)/n
 
     s = math.sqrt(2)/r
 
@@ -152,10 +156,10 @@ def normalize(tacke):
     S = np.array([[s, 0, 0], [0, s, 0], [0, 0, 1]])
 
     #Racunamo povratnu matricu za normalizaciju
-    value = np.dot(S, T)
+    value = np.matmul(S, T)
     
     #Primenjujemo normalizaciju na tacke i vracamo povratnu vrednost
-    res = list(map(lambda x: np.dot(value, np.transpose(x)).tolist() , tacke))
+    res = list(map(lambda x: np.dot(value, np.transpose(x)).tolist() , t))
     
     return value, res
 
