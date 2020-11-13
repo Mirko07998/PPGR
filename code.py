@@ -260,7 +260,8 @@ def makePoint(j):
     slike = tacke[pola:int(len(tacke))]
 
     return originali, slike
-        
+
+#funkcijaj koja skalira matricu u po prvoj koordinati
 def scale(K):
     prva = K[0][0]
     for i in range(len(K)):
@@ -268,10 +269,15 @@ def scale(K):
             K[i][j] = K[i][j]/prva
     return K
 
+#Funkcija koja nam vrsi prodjenje matrica dobijenih projektivnim preslikavanjem
 def compareMatrixs(M, N):
+    #Matirce moramo da sklairamo po jednoj koordinati da bi mogli da ih uporedimo
+    #Zato sto matrice ne morjau biti numericki skroz jednake, ali mogu jednake u projektivnom preslikavanju
+    #zbog lambda clana koji mnozi matricu
     scaleM = scale(M)
     scaleN = scale(N)
     
+    #Zaokruzujemo matrice na 5-oj decimali zbog lakseg pordjenja jer su ovo brojvi u pokretnom zarezu
     scaleM = zaokruzi(scaleM, 5)
     scaleN = zaokruzi(scaleN, 5) 
     equal = True
@@ -442,7 +448,7 @@ if __name__ == "__main__":
 
                 print(colored(R, 'green'))
             
-            c = input(colored("Da li zelite i nomalizovani DLP algoritam?\n d/n\n",'blue'))
+            c = input(colored("Da li zelite i nromalizovani DLP algoritam?\n d/n\n",'blue'))
             if c == 'd':
                 P = DLTnormalizedPure(originali, slike)
 
@@ -462,6 +468,8 @@ if __name__ == "__main__":
 
             k = input(colored("Da li zelite da uporedite DLT i normalizovani DLT u odnosu na pomerene tacke iz fajlaDLTCompare.json fajla?\nd/n\n",'blue'))
 
+
+            # Prodjeneje matrica u dva algoritma
             if k == 'd':
                 with open('DLTCompare.json','r') as f:
                      y = json.load(f)
