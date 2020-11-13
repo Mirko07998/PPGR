@@ -16,6 +16,7 @@ def naive_algorith(a, b, c, d, ap, bp, cp, dp):
     Bs = np.array([d[0], d[1], d[2]])
     #Resavamo sistem da bi dobili l1 l2 i l3
     X = np.linalg.solve(As, Bs)
+
     #izvlacimo vrednosti iz dobijene matrice
     l1 = X[0]
     l2 = X[1]
@@ -275,16 +276,20 @@ def compareMatrixs(M, N):
     scaleN = zaokruzi(scaleN, 5) 
     equal = True
 
+    print(colored(scaleN,'yellow'))
+    print()
+    print(colored(scaleM,'yellow'))
+    print()
     for i in range(len(M)):
         for j in range(len(M[i])):
             if scaleM[i][j] != scaleN[i][j]:
                 equal = False
 
     if equal:
-        print(colored("Matrice su jedanke", 'red'))
+        print(colored("Matrice su jedanke\n", 'red'))
         return 1
     else:
-        print(colored("Matrice nisu jedanke", 'red'))
+        print(colored("Matrice nisu jedanke\n", 'red'))
         return 0
 
 #Implementacija ulaza u Program
@@ -454,7 +459,24 @@ if __name__ == "__main__":
 
                     print(colored(R, 'green'))
 
-                
+
+            k = input(colored("Da li zelite da uporedite DLT i normalizovani DLT u odnosu na pomerene tacke iz fajlaDLTCompare.json fajla?\nd/n\n",'blue'))
+
+            if k == 'd':
+                with open('DLTCompare.json','r') as f:
+                     y = json.load(f)
+
+                originali, slike = makePoint(y)
+                Q = DLTpure(originali, slike)
+                Q1 = DLTnormalizedPure(originali, slike)
+                P = DLTnormalizedPure(originali, slike)
+
+                print(colored("Kada uporedimo dve matrice preslikavanja dobijene DLT algoritmom za transliranje tacke\n"), "blue")
+                compareMatrixs(P1, Q)
+                print()
+
+                print(colored("Kada uporedimo dve matrice dobijene normalizovani DLT algoritmom za translirane tacke\n", 'blue'))
+                compareMatrixs(P, Q1)
 
 
-
+#Zakljucak iz mog test primera je da je normalizovani DLT invarijantan u odnosu na promenu koordinatnog sistema
